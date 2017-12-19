@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd 
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd 
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-4.0.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+	
+	<!-- XML有两种：符合法XML，有效XML -->
+	
+	<!-- IOC: 依赖注入, 此配置文件就是一个工厂,里面配置所有Bean,可以控制创建类型、时间、数量 -->
+    <!-- 包.类 称为类全名 ,所有的bean在spring中默认是  单例 + 饿汉模式  -->
+    <!-- lazy-init="true" 懒汉模式    scope="prototype" 多例模式(在多例模式下lazy-init=true是无效的)-->
+    
+    
+    <!-- 
+        JDK1.5新特性: 注解、枚举、泛型、可变参数、静态方法导入
+                     
+                         注解分为三种: 元注解(定义注解的注解)、系统注解、自定义注解
+                       
+         Java目前趋势: 注解逐渐取代XML配置,如果配置注解则需要开启spring注解扫描机制
+     -->
+     <context:component-scan base-package="cn.yd.." />
+	
+	<!-- Service ===> Dao ===> JdbcUtils --> 
+	<!-- 1: datasource C3p0  DBCP: 配置连接池   C3p0就是用来取代JdbcUtils -->
+	<bean id="dataSouce" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<!-- 必须要有相应的set方法 -->
+		<property name="user" value="root" />
+		<property name="password" value="root" />
+		<property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/demo" />
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+	</bean>
+	<!-- 2: JdbcTemplate: 封装了连接数据库的相关操作,所有的Dao只需要依赖它即可,此类替换BaseDaoImpl -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSouce" />
+	</bean>
+	
+	<!-- 默认情况下每条SQL语句都是一个单独事务(手动提交、自动提交(默认)) -->
+	
+	<!-- 事务有两种: 编程式事务,声明式事务 Spring提供了声明式事务 -->
+	
+	<!-- 1: Spring提供了事务管理器: 事务本质是数据库的概念 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSouce" />
+	</bean>
+	
+	<!-- 2: 配置哪些包的哪些类需要切入事务,声明式事务是基于AOP，因此也需要导入aop的标签 -->
+	<aop:config>
+		<!-- 配置切面表达式  -->
+		<aop:pointcut expression="execution(* cn.yd.service.impl.*.*(..))" id="pt"/>
+		<aop:advisor advice-ref="advice" pointcut-ref="pt" order="3"/>
+	</aop:config>
+	
+	<!-- 3: 配置哪些方法需要在运行时候动态切入事务(通知),一般切入Service的方法 -->
+	<tx:advice id="advice" transaction-manager="transactionManager">
+		<tx:attributes>
+		    <!-- REQUIRED : 必须要有事务,如果没有则自动创建一个 -->
+			<tx:method name="save*" propagation="REQUIRED"/>
+			<tx:method name="update*" propagation="REQUIRED"/>
+			<tx:method name="delete*" propagation="REQUIRED"/>
+			<tx:method name="get*" propagation="SUPPORTS"/>
+			<tx:method name="query*" propagation="SUPPORTS"/>
+		</tx:attributes>
+	</tx:advice>	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</beans>

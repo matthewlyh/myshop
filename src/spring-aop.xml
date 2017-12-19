@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd 
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+	<!-- 采用正宗的AOP来实现日志和异常处理功能 -->
+	
+	<!-- IOC AOP都是Spring的功能,因此这些bean肯定需要交给spring管理 -->
+	<bean id="aop" class="cn.yd.aop.AopClass" />
+	<!-- 标准的aop语法配置如下: 可以通过order来指定与事务切入时的顺序 -->
+	<aop:config>
+	     <!-- 指定当前aop的切面类,切面里面存储的是在运行时动态切入的通知  order:数值越大优先级越高 -->
+	     <aop:aspect ref="aop" order="2">
+	        <!-- 正常执行结束,通知才会切入 -->
+	    	<aop:after-returning method="logs" pointcut-ref="pt2" /> 
+	    	<!-- 异常通知,如果出现了异常,此通知才会被切入 throwing="e",必须要和代码中参数e匹配-->
+	    	<aop:after-throwing method="ex" pointcut-ref="pt2" throwing="e"/>
+	    	<!-- 后置通知,无论是否出异常都会被切入 -->
+	    	<aop:after method="finallys" pointcut-ref="pt2"/>
+	    	<aop:pointcut expression="!execution(* cn.yd.service.impl.*.get*(..)) &amp;&amp; execution(* cn.yd.service.impl.*.*(..))" id="pt2"/>
+	     </aop:aspect>
+	</aop:config>
+</beans>
